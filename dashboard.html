@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Khảo sát - xã Hàm Thuận</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter','Segoe UI',sans-serif;background:#f0f2f5;color:#1a1a2e;line-height:1.5}
+  .dash-header{background:linear-gradient(135deg,#0f2557,#1a3f8b);color:#fff;padding:24px 32px;position:sticky;top:0;z-index:10;border-bottom:4px solid #c0392b}
+  .dash-header h1{font-size:1.15em;font-weight:800;letter-spacing:.5px}
+  .dash-header .sub{font-size:.82em;opacity:.8;margin-top:4px}
+  .header-meta{display:flex;gap:16px;margin-top:10px;flex-wrap:wrap}
+  .header-meta .tag{background:rgba(255,255,255,.15);padding:4px 12px;border-radius:12px;font-size:.78em}
+  .container{max-width:1100px;margin:0 auto;padding:20px 16px 40px}
+  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:18px}
+  .kpi-card{background:#fff;border-radius:12px;padding:18px 20px;position:relative;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .kpi-card .kpi-label{font-size:.76em;color:#666;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+  .kpi-card .kpi-value{font-size:2em;font-weight:800;margin:4px 0}
+  .kpi-card .kpi-sub{font-size:.76em;color:#888}
+  .kpi-card .kpi-bar{position:absolute;bottom:0;left:0;height:4px;border-radius:0 2px 0 0}
+  .kpi-card.green .kpi-value{color:#1b8a4e}.kpi-card.green .kpi-bar{background:#1b8a4e}
+  .kpi-card.blue .kpi-value{color:#1a3f8b}.kpi-card.blue .kpi-bar{background:#1a3f8b}
+  .kpi-card.amber .kpi-value{color:#d48800}.kpi-card.amber .kpi-bar{background:#d48800}
+  .kpi-card.red .kpi-value{color:#c0392b}.kpi-card.red .kpi-bar{background:#c0392b}
+  .section{background:#fff;border-radius:12px;padding:22px 24px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .section-title{font-size:.92em;font-weight:700;color:#1a3f8b;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .section-title .icon{font-size:1.1em}
+  .formula-box{background:#f0f7ff;border-left:4px solid #1a3f8b;border-radius:0 12px 12px 0;padding:16px 20px;margin-bottom:18px;font-size:.84em;line-height:1.8;color:#333}
+  .chart-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+  .chart-box{background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .chart-box h3{font-size:.85em;font-weight:700;color:#333;margin-bottom:12px}
+  .chart-wrap{position:relative;height:280px}
+  .heat-table{width:100%;border-collapse:separate;border-spacing:3px;font-size:.8em}
+  .heat-table th{background:#f5f7fa;padding:8px 6px;font-weight:600;text-align:center;border-radius:6px;font-size:.82em;color:#555}
+  .heat-table th:first-child{text-align:left;min-width:160px}
+  .heat-table td{padding:8px 6px;text-align:center;border-radius:6px;font-weight:700;font-size:.92em}
+  .heat-table td:first-child{text-align:left;font-weight:500;color:#333;background:#f9fafb}
+  .heat-table .sc{color:#fff}
+  .heat-table .no-data{opacity:.55;font-style:italic}
+  .unit-detail{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .unit-card{border:1px solid #e8eaed;border-radius:10px;padding:14px 16px}
+  .unit-card .unit-name{font-weight:700;font-size:.88em;margin-bottom:6px;color:#1a3f8b}
+  .unit-card .unit-score{font-size:1.8em;font-weight:800}
+  .unit-card .unit-count{font-size:.75em;color:#888}
+  .q-bar-row{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:.78em}
+  .q-bar-row .q-label{width:50px;font-weight:600;color:#666;flex-shrink:0}
+  .q-bar-track{flex:1;height:10px;background:#eee;border-radius:5px;overflow:hidden}
+  .q-bar-fill{height:100%;border-radius:5px;transition:width .8s ease}
+  .q-bar-val{width:36px;font-weight:700;text-align:right;flex-shrink:0}
+  .dash-footer{text-align:center;font-size:.78em;color:#999;padding:20px}
+  .legend-row{display:flex;gap:16px;flex-wrap:wrap;margin-top:6px}
+  .legend-item{display:flex;align-items:center;gap:4px;font-size:.92em}
+  .legend-dot{width:14px;height:14px;border-radius:3px;display:inline-block}
+  @media(max-width:768px){.chart-row,.unit-detail{grid-template-columns:1fr}.kpi-row{grid-template-columns:repeat(2,1fr)}.dash-header{padding:16px}.container{padding:12px 8px}}
+</style>
+</head>
+<body>
+<div class="dash-header">
+  <h1>📊 DASHBOARD KHẢO SÁT SỰ HÀI LÒNG CỦA NGƯỜI DÂN</h1>
+  <div class="sub">Xã Hàm Thuận, tỉnh Lâm Đồng</div>
+  <div class="header-meta">
+    <span class="tag">📅 Tuần 07/07 – 13/07/2026</span>
+    <span class="tag">📧 Gửi lúc 18:00 Thứ 6, 13/07/2026</span>
+    <span class="tag" id="totalTag">📝 Tổng: ... phiếu</span>
+    <span class="tag" id="filterToggle" style="cursor:pointer; background:rgba(255,255,255,0.28); user-select:none;" onclick="toggleClean()">🧹 Chỉ tính phiếu sạch: TẮT</span>
+    <span class="tag" id="rangeToggle" style="cursor:pointer; background:rgba(255,255,255,0.28); user-select:none;" onclick="toggleRange()">📆 Kỳ: TUẦN</span>
+  </div>
+</div>
+<div class="container">
+  <!-- CÔNG THỨC -->
+  <div class="formula-box">
+    <strong>📐 Công thức tính điểm (thang 100)</strong><br>
+    • Mỗi câu hỏi 5 phương án, quy điểm: <strong>100 → 75 → 50 → 25 → 0</strong> (tích cực nhất = 100)<br>
+    • <strong>Điểm TB câu hỏi</strong> = Tổng điểm tất cả phiếu ÷ Số phiếu<br>
+    • <strong>Điểm TB đơn vị (tuần)</strong> = Trung bình cộng điểm TB các câu hỏi<br>
+    • <strong>Điểm TB tháng</strong> = Trung bình cộng điểm các tuần trong tháng<br>
+    • Đơn vị <strong>chưa có phiếu</strong> → tròn <strong style="color:#1b8a4e">100 điểm</strong>, kèm chú thích <sup>(*)</sup><br>
+    <div class="legend-row">
+      <span class="legend-item"><span class="legend-dot" style="background:#1b8a4e"></span> ≥ 80 Tốt</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#2196f3"></span> ≥ 65 Khá</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#f39c12"></span> ≥ 50 TB</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#c0392b"></span> < 50 Yếu</span>
+    </div>
+  </div>
+  <div class="kpi-row" id="kpiRow"></div>
+  <div class="chart-row">
+    <div class="chart-box"><h3>📊 Điểm trung bình theo khối (thang 100)</h3><div class="chart-wrap"><canvas id="chartGroup"></canvas></div></div>
+    <div class="chart-box" id="trendBox"><h3>📈 Xu hướng 4 tuần gần nhất</h3><div class="chart-wrap"><canvas id="chartTrend"></canvas></div></div>
+  </div>
+  <div class="section">
+    <div class="section-title"><span class="icon">🔥</span> Bảng điểm chi tiết — xếp hạng cao → thấp</div>
+    <div style="overflow-x:auto"><table class="heat-table" id="heatTable"></table></div>
+    <div style="font-size:.76em;color:#999;margin-top:8px;font-style:italic">(*) Chưa có phiếu đánh giá — tròn 100 điểm mặc định.</div>
+  </div>
+  <div class="section"><div class="section-title"><span class="icon">🏛️</span> Khối UBND xã</div><div class="unit-detail" id="ubndDetail"></div></div>
+  <div class="section"><div class="section-title"><span class="icon">⭐</span> Khối cơ quan Đảng</div><div class="unit-detail" id="dangDetail"></div></div>
+  <div class="section"><div class="section-title"><span class="icon">🤝</span> UBMTTQVN xã</div><div class="unit-detail" id="mttqDetail"></div></div>
+  <div class="section"><div class="section-title"><span class="icon">🏘️</span> Khối Thôn</div><div class="unit-detail" id="thonDetail"></div></div>
+  <div class="section"><div class="section-title"><span class="icon">💬</span> Ý kiến đóng góp nổi bật trong tuần</div><div id="feedbackList"></div></div>
+  <div class="section"><div class="section-title"><span class="icon">🆘</span> Yêu cầu hỗ trợ chưa xử lý</div><div id="supportList"></div></div>
+
+  <!-- CẢNH BÁO GIAN LẬN -->
+  <div class="section" style="border:2px solid #ffcdd2; background:#fffbfb;">
+    <div class="section-title" style="color:#c0392b;"><span class="icon">⚠️</span> Cảnh báo phiếu nghi vấn gian lận</div>
+    <div id="fraudStats" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:16px;"></div>
+    <div style="overflow-x:auto"><table class="heat-table" id="fraudTable" style="border-spacing:0;"></table></div>
+    <div style="font-size:.78em; color:#888; margin-top:10px; line-height:1.6;">
+      🔍 <strong>Cơ chế phát hiện:</strong> mỗi phiếu ghi lại dấu vân tay thiết bị (fingerprint), địa chỉ IP và thời gian điền form.
+      Phiếu bị gắn cờ khi: cùng 1 máy gửi ≥ 3 lần, hoặc điền form dưới 5 giây.
+      Cán bộ tự xem xét và dùng nút <strong>"Chỉ tính phiếu sạch"</strong> để loại phiếu nghi vấn khi tính điểm chính thức.
+    </div>
+  </div>
+</div>
+<div class="dash-footer">
+  Hệ thống tự động gửi bởi Google Apps Script · danguyhamthuan@gmail.com<br>
+  Báo cáo tuần: 18h Thứ 6 · Báo cáo tháng: 18h ngày cuối tháng
+</div>
+<script src="config.js"></script>
+<script>
+// ========================================================
+// DASHBOARD TRỰC TUYẾN - đọc dữ liệu thật từ Apps Script
+// Nếu chưa cấu hình URL hoặc lỗi → dùng dữ liệu mẫu bên dưới
+// ========================================================
+
+// Nạp dữ liệu thật từ API
+async function loadLiveData(range = 'week', clean = false) {
+  if (typeof APPS_SCRIPT_URL === 'undefined' || APPS_SCRIPT_URL === 'PASTE_WEB_APP_URL_HERE') {
+    console.warn('⚠️ Chưa cấu hình APPS_SCRIPT_URL — đang dùng dữ liệu mẫu.');
+    return null;
+  }
+  try {
+    const url = `${APPS_SCRIPT_URL}?action=summary&range=${range}&clean=${clean ? '1' : '0'}`;
+    const res = await fetch(url);
+    const json = await res.json();
+    return transformApiData(json);
+  } catch (err) {
+    console.error('Lỗi tải dữ liệu:', err);
+    return null;
+  }
+}
+
+// Chuyển dữ liệu API → cấu trúc DATA của dashboard
+function transformApiData(api) {
+  const groupKeyMap = {
+    'Khối UBND xã': 'ubnd', 'Khối cơ quan Đảng': 'dang',
+    'UBMTTQVN xã': 'mttq', 'Khối Thôn': 'thon'
+  };
+  const qLabelsMap = {
+    ubnd: ['Thái độ','Chờ đợi','Đúng hẹn','Xin lỗi trễ','CSVC'],
+    dang: ['Thái độ','Chờ đợi','Đúng hẹn','TB chậm','CSVC'],
+    mttq: ['Thái độ','Chờ đợi','Đúng hẹn','TB chậm','CSVC'],
+    thon: ['Lắng nghe','Thông tin','Phản ánh','Công khai','An ninh','VSMT']
+  };
+
+  const groups = {};
+  Object.entries(api.groups).forEach(([label, g]) => {
+    const key = groupKeyMap[label] || label;
+    groups[key] = { label: label, qLabels: qLabelsMap[key] || [], units: {} };
+    Object.entries(g.units).forEach(([name, u]) => {
+      // API trả về điểm TB đơn vị, không có điểm từng câu → hiển thị điểm TB
+      groups[key].units[name] = {
+        count: u.count,
+        scores: u.noData ? [] : [u.avg], // chỉ có điểm TB
+        avgOverride: u.avg
+      };
+    });
+  });
+
+  return {
+    totalResponses: api.total,
+    prevWeekResponses: api.total, // API chưa trả tuần trước
+    overallAvg: api.overallAvg,
+    period: api.period,
+    groups: groups,
+    trend: null, // có thể bổ sung sau
+    feedbacks: api.feedbacks || [],
+    supportRequests: (api.support || []).map(s => ({
+      name: s.name, phone: s.phone, field: s.field,
+      content: s.content, date: s.date, status: s.status
+    })),
+    suspiciousGroups: (api.suspicious || []).map(s => ({
+      fingerprint: s.fingerprint, ip: s.ip, count: s.count,
+      units: s.units, avgFillTime: s.avgFillTime,
+      note: s.count + ' phiếu cùng máy',
+      level: s.count >= 10 ? 'high' : s.count >= 5 ? 'medium' : 'low'
+    })),
+    fraudStats: {
+      totalFlagged: api.flaggedCount,
+      cleanCount: api.cleanCount,
+      tooFast: (api.suspicious || []).filter(s => s.avgFillTime < 5).length,
+      duplicateDevice: api.flaggedCount
+    }
+  };
+}
+
+// ===== SAMPLE DATA (dùng khi chưa cấu hình - thang 100) =====
+let DATA = {
+  totalResponses: 147, prevWeekResponses: 123,
+  groups: {
+    ubnd: {
+      label: 'Khối UBND', qLabels: ['Thái độ','Chờ đợi','Đúng hẹn','Xin lỗi trễ','CSVC'],
+      units: {
+        'TT Hành chính công': { count: 38, scores: [84, 76, 80, 70, 82] },
+        'Phòng Kinh tế':      { count: 12, scores: [78, 72, 74, 64, 76] },
+        'Phòng VH-XH':        { count: 15, scores: [86, 80, 82, 76, 80] }
+      }
+    },
+    dang: {
+      label: 'Khối Đảng', qLabels: ['Thái độ','Chờ đợi','Đúng hẹn','TB chậm','CSVC'],
+      units: {
+        'VP Đảng ủy':       { count: 8, scores: [88, 82, 84, 78, 74] },
+        'Ban XD Đảng':       { count: 5, scores: [82, 76, 80, 72, 70] },
+        'CQ UBKT Đảng ủy':  { count: 4, scores: [80, 74, 78, 70, 72] }
+      }
+    },
+    mttq: {
+      label: 'MTTQVN', qLabels: ['Thái độ','Chờ đợi','Đúng hẹn','TB chậm','CSVC'],
+      units: {
+        'UBMTTQVN xã': { count: 7, scores: [86, 80, 76, 72, 78] }
+      }
+    },
+    thon: {
+      label: 'Khối Thôn', qLabels: ['Lắng nghe','Thông tin','Phản ánh','Công khai','An ninh','VSMT'],
+      units: {
+        'Thôn Ma Lâm':      { count: 10, scores: [86, 82, 80, 84, 88, 80] },
+        'Thôn Thuận Minh':   { count: 7,  scores: [84, 80, 76, 78, 82, 74] },
+        'Thôn Đức Hòa':     { count: 9,  scores: [82, 78, 74, 76, 84, 72] },
+        'Thôn Tùy Hòa':     { count: 6,  scores: [80, 74, 70, 74, 80, 70] },
+        'Thôn Lâm Hòa':     { count: 4,  scores: [78, 72, 68, 70, 76, 66] },
+        'Thôn Hàm Đức':     { count: 8,  scores: [76, 70, 66, 72, 78, 68] },
+        'Thôn Tầm Hưng':    { count: 5,  scores: [72, 68, 64, 66, 74, 62] },
+        'Thôn Ku Kê':       { count: 0,  scores: [] }
+      }
+    }
+  },
+  trend: {
+    weeks: ['22/06','29/06','06/07','13/07'],
+    ubnd: [77, 78, 79, 79],
+    dang: [74, 76, 77, 78],
+    mttq: [76, 77, 78, 78],
+    thon: [71, 73, 74, 75]
+  },
+  feedbacks: [
+    { unit: 'TT Hành chính công', text: 'Cần bổ sung thêm ghế ngồi chờ, buổi sáng rất đông.', date: '10/07' },
+    { unit: 'Thôn Tầm Hưng', text: 'Rác thải ở đầu thôn chưa được thu gom thường xuyên.', date: '08/07' },
+    { unit: 'Phòng Kinh tế', text: 'Cán bộ hướng dẫn tận tình nhưng trả kết quả hơi lâu.', date: '11/07' },
+    { unit: 'VP Đảng ủy', text: 'Rất hài lòng, giải quyết nhanh chóng.', date: '12/07' },
+    { unit: 'Thôn Ku Kê', text: 'Đường trong thôn tối, cần thêm đèn đường.', date: '09/07' }
+  ],
+  supportRequests: [
+    { name: 'Nguyễn Văn A', phone: '0912***456', field: 'Đất đai', content: 'Hỏi thủ tục chuyển mục đích SDĐ', date: '09/07', status: 'Chưa xử lý' },
+    { name: 'Trần Thị B', phone: '0988***321', field: 'Hộ tịch', content: 'Hướng dẫn đăng ký khai sinh', date: '11/07', status: 'Chưa xử lý' },
+    { name: 'Lê Văn C', phone: '0367***789', field: 'Công tác Đảng', content: 'Thủ tục chuyển sinh hoạt Đảng', date: '12/07', status: 'Đang xử lý' }
+  ],
+
+  // ===== DỮ LIỆU CHỐNG GIAN LẬN =====
+  // Mỗi phiếu gửi có: fingerprint máy, IP, thời gian điền (giây), đơn vị được đánh giá, điểm TB
+  suspiciousGroups: [
+    { fingerprint: 'FP-a3f9c2', ip: '113.161.42.xxx', count: 14, units: ['Phòng Kinh tế (12)', 'Thôn Tầm Hưng (2)'], avgFillTime: 4.2, note: 'Cùng 1 máy gửi 14 phiếu, đa số hạ điểm Phòng Kinh tế', level: 'high' },
+    { fingerprint: 'FP-7b1e88', ip: '171.244.10.xxx', count: 6, units: ['Thôn Ku Kê (6)'], avgFillTime: 6.8, note: '6 phiếu cùng máy trong 15 phút', level: 'medium' },
+    { fingerprint: 'FP-c92d10', ip: '42.113.55.xxx', count: 3, units: ['TT Hành chính công (3)'], avgFillTime: 22.5, note: '3 phiếu cùng máy (có thể gia đình dùng chung)', level: 'low' }
+  ],
+  // Thống kê tổng
+  fraudStats: { totalFlagged: 23, cleanCount: 124, tooFast: 11, duplicateDevice: 20 }
+};
+
+// ===== HELPERS =====
+function avg(arr) { return arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 100; }
+function sColor(s) { return s>=80?'#1b8a4e':s>=65?'#2196f3':s>=50?'#f39c12':'#c0392b'; }
+function sClass(s) { return s>=80?'green':s>=65?'blue':s>=50?'amber':'red'; }
+
+// Flatten all units for ranking
+function getAllUnits() {
+  const all = [];
+  Object.values(DATA.groups).forEach(g => {
+    Object.entries(g.units).forEach(([name, u]) => {
+      const a = (u.avgOverride !== undefined) ? u.avgOverride : (u.count > 0 ? avg(u.scores) : 100);
+      all.push({ name, count: u.count, scores: u.scores, avg: a, qLabels: g.qLabels });
+    });
+  });
+  return all;
+}
+
+// ===== KPIs =====
+function buildKPIs() {
+  const units = getAllUnits();
+  const withData = units.filter(u => u.count > 0);
+  const overallAvg = avg(withData.map(u => u.avg));
+  const total = DATA.totalResponses;
+  const change = total - DATA.prevWeekResponses;
+  const lowUnits = withData.filter(u => u.avg < 65).length;
+  const pending = DATA.supportRequests.filter(s => s.status === 'Chưa xử lý').length;
+
+  document.getElementById('totalTag').textContent = `📝 Tổng: ${total} phiếu`;
+
+  const kpis = [
+    { label: 'Tổng phiếu tuần', value: total, sub: `${change>=0?'▲':'▼'} ${Math.abs(change)} so với tuần trước`, cls: 'blue', pct: 100 },
+    { label: 'Điểm trung bình chung', value: overallAvg.toFixed(1), sub: 'Thang 100 điểm', cls: sClass(overallAvg), pct: overallAvg },
+    { label: 'Đơn vị cần cải thiện', value: lowUnits, sub: 'Điểm TB dưới 65', cls: lowUnits>0?'amber':'green', pct: lowUnits>0?60:20 },
+    { label: 'Yêu cầu hỗ trợ chờ', value: pending, sub: `/ ${DATA.supportRequests.length} tổng`, cls: pending>0?'red':'green', pct: pending>0?70:20 }
+  ];
+  document.getElementById('kpiRow').innerHTML = kpis.map(k => `
+    <div class="kpi-card ${k.cls}">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value">${k.value}</div>
+      <div class="kpi-sub">${k.sub}</div>
+      <div class="kpi-bar" style="width:${k.pct}%"></div>
+    </div>`).join('');
+}
+
+// ===== GROUP BAR CHART =====
+function buildGroupChart() {
+  const labels=[], values=[], colors=[];
+  Object.values(DATA.groups).forEach(g => {
+    const sc = [];
+    Object.values(g.units).forEach(u => { if(u.count>0) sc.push(avg(u.scores)); });
+    const a = sc.length ? avg(sc) : 100;
+    labels.push(g.label); values.push(+a.toFixed(1)); colors.push(sColor(a));
+  });
+  new Chart(document.getElementById('chartGroup'), {
+    type:'bar', data:{ labels, datasets:[{ data:values, backgroundColor:colors, borderRadius:8, barThickness:50 }] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:ctx=>ctx.parsed.y.toFixed(1)+' / 100' } } },
+      scales:{ y:{min:0,max:100,ticks:{stepSize:20},grid:{color:'#f0f0f0'}}, x:{grid:{display:false}} }
+    }
+  });
+}
+
+// ===== TREND =====
+function buildTrendChart() {
+  const t = DATA.trend;
+  new Chart(document.getElementById('chartTrend'), {
+    type:'line', data:{
+      labels: t.weeks,
+      datasets:[
+        { label:'UBND', data:t.ubnd, borderColor:'#1a3f8b', tension:.3, fill:false, pointRadius:4 },
+        { label:'Đảng', data:t.dang, borderColor:'#c0392b', tension:.3, fill:false, pointRadius:4 },
+        { label:'MTTQ', data:t.mttq, borderColor:'#1b8a4e', tension:.3, fill:false, pointRadius:4 },
+        { label:'Thôn', data:t.thon, borderColor:'#d48800', tension:.3, fill:false, pointRadius:4 }
+      ]
+    },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'bottom', labels:{ usePointStyle:true, padding:16, font:{size:11} } } },
+      scales:{ y:{min:50,max:100,ticks:{stepSize:10},grid:{color:'#f0f0f0'}}, x:{grid:{display:false}} }
+    }
+  });
+}
+
+// ===== HEATMAP (sorted high → low) =====
+function buildHeatmap() {
+  const maxQ = 6;
+  const units = getAllUnits().sort((a,b) => b.avg - a.avg);
+
+  let html = '<thead><tr><th>#</th><th>Đơn vị</th>';
+  for(let i=1;i<=maxQ;i++) html += `<th>Câu ${i}</th>`;
+  html += '<th>TB</th><th>Phiếu</th></tr></thead><tbody>';
+
+  units.forEach((u, idx) => {
+    const rank = idx + 1;
+    const noData = u.count === 0;
+    html += `<tr><td style="text-align:center;font-weight:700;color:#888;">${rank}</td><td>${u.name}</td>`;
+    
+    if (noData) {
+      for(let i=0;i<maxQ;i++) html += `<td class="sc no-data" style="background:#1b8a4e">100<sup>*</sup></td>`;
+      html += `<td class="sc no-data" style="background:#1b8a4e;font-size:1.05em">100<sup>*</sup></td>`;
+      html += `<td style="background:#f9fafb;color:#999;font-style:italic">0 *</td>`;
+    } else {
+      for(let i=0;i<maxQ;i++){
+        if(i<u.scores.length){ const s=u.scores[i]; html+=`<td class="sc" style="background:${sColor(s)}">${s}</td>`; }
+        else html+=`<td style="background:#f5f5f5;color:#ccc">—</td>`;
+      }
+      html += `<td class="sc" style="background:${sColor(u.avg)};font-size:1.05em">${u.avg.toFixed(1)}</td>`;
+      html += `<td style="background:#f9fafb;color:#666">${u.count}</td>`;
+    }
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  document.getElementById('heatTable').innerHTML = html;
+}
+
+// ===== UNIT DETAIL =====
+function buildUnitDetail(groupKey, containerId) {
+  const g = DATA.groups[groupKey];
+  // Sort units by avg descending
+  const sorted = Object.entries(g.units).sort((a,b) => {
+    const aAvg = a[1].count>0 ? avg(a[1].scores) : 100;
+    const bAvg = b[1].count>0 ? avg(b[1].scores) : 100;
+    return bAvg - aAvg;
+  });
+
+  document.getElementById(containerId).innerHTML = sorted.map(([name, u]) => {
+    if (u.count === 0) {
+      return `<div class="unit-card" style="border-style:dashed">
+        <div class="unit-name">${name}</div>
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <span class="unit-score" style="color:#1b8a4e">100</span>
+          <span class="unit-count" style="color:#999;font-style:italic">0 phiếu — chưa có đánh giá (*)</span>
+        </div></div>`;
+    }
+    const a = avg(u.scores);
+    const bars = u.scores.map((s,i) => `
+      <div class="q-bar-row">
+        <span class="q-label">${g.qLabels[i]||'C'+(i+1)}</span>
+        <div class="q-bar-track"><div class="q-bar-fill" style="width:${s}%;background:${sColor(s)}"></div></div>
+        <span class="q-bar-val" style="color:${sColor(s)}">${s}</span>
+      </div>`).join('');
+    return `<div class="unit-card">
+      <div class="unit-name">${name}</div>
+      <div style="display:flex;align-items:baseline;gap:8px">
+        <span class="unit-score" style="color:${sColor(a)}">${a.toFixed(1)}</span>
+        <span class="unit-count">${u.count} phiếu</span>
+      </div>${bars}</div>`;
+  }).join('');
+}
+
+// ===== FEEDBACKS =====
+function buildFeedbacks() {
+  document.getElementById('feedbackList').innerHTML = DATA.feedbacks.map(f => `
+    <div style="border-left:3px solid #1a3f8b;padding:8px 14px;margin-bottom:8px;background:#f8f9fb;border-radius:0 8px 8px 0">
+      <div style="font-size:.82em;color:#888">${f.date} · <strong style="color:#1a3f8b">${f.unit}</strong></div>
+      <div style="font-size:.88em;margin-top:3px">"${f.text}"</div>
+    </div>`).join('');
+}
+
+// ===== SUPPORT =====
+function buildSupport() {
+  document.getElementById('supportList').innerHTML = `
+    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.84em">
+      <thead><tr style="background:#f5f7fa">
+        <th style="padding:8px;text-align:left">Họ tên</th><th style="padding:8px">SĐT</th>
+        <th style="padding:8px">Lĩnh vực</th><th style="padding:8px;text-align:left">Nội dung</th>
+        <th style="padding:8px">Ngày</th><th style="padding:8px">Trạng thái</th>
+      </tr></thead><tbody>
+      ${DATA.supportRequests.map(s=>`<tr style="border-bottom:1px solid #eee">
+        <td style="padding:8px">${s.name}</td><td style="padding:8px;text-align:center">${s.phone}</td>
+        <td style="padding:8px;text-align:center">${s.field}</td><td style="padding:8px">${s.content}</td>
+        <td style="padding:8px;text-align:center">${s.date}</td>
+        <td style="padding:8px;text-align:center"><span style="background:${s.status==='Chưa xử lý'?'#fde8e8':'#e8f5e9'};color:${s.status==='Chưa xử lý'?'#c0392b':'#1b8a4e'};padding:3px 10px;border-radius:10px;font-size:.88em;font-weight:600">${s.status}</span></td>
+      </tr>`).join('')}
+    </tbody></table></div>`;
+}
+
+// ===== FRAUD DETECTION =====
+function buildFraudStats() {
+  const f = DATA.fraudStats;
+  const cards = [
+    { label: 'Phiếu bị gắn cờ', value: f.totalFlagged, color: '#c0392b' },
+    { label: 'Phiếu sạch', value: f.cleanCount, color: '#1b8a4e' },
+    { label: 'Điền quá nhanh (<5s)', value: f.tooFast, color: '#d48800' },
+    { label: 'Trùng thiết bị', value: f.duplicateDevice, color: '#c0392b' }
+  ];
+  document.getElementById('fraudStats').innerHTML = cards.map(c => `
+    <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:12px 14px; text-align:center;">
+      <div style="font-size:1.6em; font-weight:800; color:${c.color};">${c.value}</div>
+      <div style="font-size:.72em; color:#777; margin-top:2px;">${c.label}</div>
+    </div>`).join('');
+}
+
+function buildFraudTable() {
+  const levelColor = { high:'#c0392b', medium:'#d48800', low:'#f0ad4e' };
+  const levelText = { high:'🔴 Cao', medium:'🟠 Vừa', low:'🟡 Thấp' };
+  let html = `<thead><tr style="background:#f5f7fa">
+    <th style="padding:9px; text-align:left;">Mức</th>
+    <th style="padding:9px; text-align:left;">Fingerprint máy</th>
+    <th style="padding:9px;">IP</th>
+    <th style="padding:9px;">Số phiếu</th>
+    <th style="padding:9px; text-align:left;">Đơn vị bị đánh</th>
+    <th style="padding:9px;">TG điền TB</th>
+    <th style="padding:9px; text-align:left;">Ghi chú</th>
+  </tr></thead><tbody>`;
+  DATA.suspiciousGroups.forEach(s => {
+    const fast = s.avgFillTime < 5;
+    html += `<tr style="border-bottom:1px solid #f0e0e0;">
+      <td style="padding:9px; font-weight:600; color:${levelColor[s.level]};">${levelText[s.level]}</td>
+      <td style="padding:9px; font-family:monospace; font-size:.9em;">${s.fingerprint}</td>
+      <td style="padding:9px; text-align:center; font-family:monospace; font-size:.85em; color:#666;">${s.ip}</td>
+      <td style="padding:9px; text-align:center; font-weight:700; color:#c0392b;">${s.count}</td>
+      <td style="padding:9px; font-size:.9em;">${s.units.join(', ')}</td>
+      <td style="padding:9px; text-align:center; font-weight:600; color:${fast?'#c0392b':'#666'};">${s.avgFillTime}s ${fast?'⚡':''}</td>
+      <td style="padding:9px; font-size:.85em; color:#555;">${s.note}</td>
+    </tr>`;
+  });
+  html += '</tbody>';
+  document.getElementById('fraudTable').innerHTML = html;
+}
+
+// ===== RENDER TẤT CẢ =====
+function renderAll() {
+  buildKPIs();
+  const trendBox = document.getElementById('trendBox');
+  if (DATA.trend) { trendBox.style.display = ''; buildTrendChart(); }
+  else { trendBox.style.display = 'none'; }
+  buildGroupChart();
+  buildHeatmap();
+  buildUnitDetail('ubnd','ubndDetail'); buildUnitDetail('dang','dangDetail');
+  buildUnitDetail('mttq','mttqDetail'); buildUnitDetail('thon','thonDetail');
+  buildFeedbacks(); buildSupport();
+  buildFraudStats(); buildFraudTable();
+}
+
+// ===== STATE =====
+let cleanMode = false;
+let rangeMode = 'week'; // week | month
+let isLive = false;
+
+// ===== TOGGLE: CHỈ TÍNH PHIẾU SẠCH =====
+async function toggleClean() {
+  cleanMode = !cleanMode;
+  const btn = document.getElementById('filterToggle');
+  btn.textContent = cleanMode ? '🧹 Chỉ tính phiếu sạch: BẬT' : '🧹 Chỉ tính phiếu sạch: TẮT';
+  btn.style.background = cleanMode ? '#1b8a4e' : 'rgba(255,255,255,0.28)';
+
+  if (isLive) {
+    const live = await loadLiveData(rangeMode, cleanMode);
+    if (live) { DATA = live; renderAll(); return; }
+  }
+  // Fallback demo
+  if (cleanMode) {
+    DATA.totalResponses = DATA.fraudStats.cleanCount;
+  } else {
+    DATA.totalResponses = 147;
+  }
+  buildKPIs();
+}
+
+// ===== TOGGLE: KỲ BÁO CÁO TUẦN/THÁNG =====
+async function toggleRange() {
+  rangeMode = (rangeMode === 'week') ? 'month' : 'week';
+  const btn = document.getElementById('rangeToggle');
+  btn.textContent = rangeMode === 'week' ? '📆 Kỳ: TUẦN' : '📆 Kỳ: THÁNG';
+  if (isLive) {
+    const live = await loadLiveData(rangeMode, cleanMode);
+    if (live) {
+      DATA = live;
+      const tag = document.querySelector('.header-meta .tag');
+      if (tag && DATA.period) tag.textContent = '📅 ' + DATA.period;
+      renderAll();
+    }
+  }
+}
+
+// ===== KHỞI CHẠY =====
+async function init() {
+  const live = await loadLiveData('week', false);
+  if (live) {
+    DATA = live;
+    isLive = true;
+    // Cập nhật tiêu đề kỳ báo cáo
+    const tag = document.querySelector('.header-meta .tag');
+    if (tag && DATA.period) tag.textContent = '📅 ' + DATA.period;
+  }
+  renderAll();
+}
+init();
+</script>
+</body>
+</html>

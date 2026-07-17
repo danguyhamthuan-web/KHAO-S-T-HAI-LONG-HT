@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Khảo sát sự hài lòng của người dân - xã Hàm Thuận</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #e8f0fe; color: #333; line-height: 1.6; }
+  .container { max-width: 800px; margin: 0 auto; padding: 16px; }
+
+  .header { background: linear-gradient(135deg, #1a3a6b, #2557a7); color: #fff; text-align: center; padding: 28px 20px; border-radius: 12px 12px 0 0; border-top: 5px solid #c0392b; }
+  .header h1 { font-size: 1.25em; letter-spacing: 1px; margin-bottom: 8px; }
+  .header p { font-style: italic; font-size: 0.88em; opacity: 0.9; }
+
+  .intro { background: #fff8e1; padding: 14px 18px; font-size: 0.87em; font-style: italic; border-left: 4px solid #f9a825; }
+
+  .section { background: #fff; padding: 20px 24px; margin-top: 2px; }
+  .section:last-of-type { border-radius: 0 0 12px 12px; margin-bottom: 30px; }
+  .section-title { font-size: 1.05em; font-weight: 700; color: #c0392b; margin-bottom: 16px; padding-left: 12px; border-left: 4px solid #c0392b; }
+
+  label.field-label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.92em; }
+  .req { color: #c0392b; font-weight: 700; }
+
+  input[type="text"], input[type="tel"], select, textarea {
+    width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.92em; margin-bottom: 14px; font-family: inherit;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: #2557a7; box-shadow: 0 0 0 2px rgba(37,87,167,0.15); }
+  textarea { resize: vertical; min-height: 80px; }
+
+  .unit-group-title { font-weight: 700; font-size: 0.86em; color: #1a3a6b; background: #e3ecfa; padding: 7px 12px; border-radius: 6px; margin: 12px 0 6px 0; }
+  .unit-group-title:first-of-type { margin-top: 4px; }
+  .unit-options { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 0 4px 0; }
+  .unit-btn { padding: 7px 14px; border: 2px solid #d0d0d0; border-radius: 20px; background: #fff; cursor: pointer; font-size: 0.84em; transition: all 0.2s; font-family: inherit; color: #333; }
+  .unit-btn:hover { border-color: #2557a7; background: #f0f5ff; }
+  .unit-btn.active { border-color: #2557a7; background: #2557a7; color: #fff; font-weight: 600; }
+
+  .q-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; }
+  .q-text { font-size: 0.91em; font-weight: 500; margin-bottom: 10px; line-height: 1.5; }
+  .rating-row { display: flex; justify-content: space-between; gap: 4px; }
+  .rating-option { text-align: center; flex: 1; }
+  .rating-option input[type="radio"] { margin: 0; cursor: pointer; width: 18px; height: 18px; accent-color: #2557a7; }
+  .rating-option span { display: block; font-size: 0.72em; color: #666; margin-top: 4px; line-height: 1.3; }
+
+  .selected-unit-badge { display: inline-block; background: #2557a7; color: #fff; padding: 5px 14px; border-radius: 14px; font-size: 0.85em; margin-bottom: 14px; font-weight: 600; }
+  .criteria-placeholder { text-align: center; color: #999; padding: 30px 10px; font-style: italic; font-size: 0.92em; }
+
+  .checkbox-row { display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 4px; }
+  .checkbox-row input { width: 18px; height: 18px; accent-color: #4caf50; cursor: pointer; }
+  .checkbox-row label { font-weight: 600; color: #2e7d32; cursor: pointer; font-size: 0.92em; }
+  .support-hint { font-size: 0.82em; color: #666; margin-bottom: 12px; }
+  .support-box { background: #e8f5e9; border: 2px dashed #4caf50; border-radius: 8px; padding: 16px; margin-top: 10px; }
+  .support-fields.hidden { display: none; }
+
+  .btn-submit { display: block; width: 100%; padding: 14px; background: #c0392b; color: #fff; border: none; border-radius: 8px; font-size: 1.05em; font-weight: 700; cursor: pointer; letter-spacing: 1px; margin-top: 16px; font-family: inherit; }
+  .btn-submit:hover { background: #a93226; }
+  .btn-submit:disabled { background: #999; cursor: not-allowed; }
+
+  /* Overlay thông báo */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+  .overlay.show { display: flex; }
+  .overlay-box { background: #fff; border-radius: 14px; padding: 32px; max-width: 420px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+  .overlay-box .icon { font-size: 3em; margin-bottom: 12px; }
+  .overlay-box h2 { font-size: 1.2em; margin-bottom: 8px; }
+  .overlay-box p { color: #666; font-size: 0.9em; margin-bottom: 20px; }
+  .overlay-box button { padding: 10px 28px; background: #2557a7; color: #fff; border: none; border-radius: 8px; font-size: 0.95em; cursor: pointer; font-weight: 600; }
+
+  .blocked-msg { background: #fff3e0; border: 1px solid #ffcc80; border-radius: 8px; padding: 14px 16px; color: #e65100; font-size: 0.9em; text-align: center; margin-bottom: 16px; }
+
+  @media (max-width: 600px) {
+    .container { padding: 8px; }
+    .section { padding: 14px 12px; }
+    .header h1 { font-size: 1.1em; }
+    .rating-option span { font-size: 0.63em; }
+    .unit-btn { font-size: 0.78em; padding: 6px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>KHẢO SÁT SỰ HÀI LÒNG CỦA NGƯỜI DÂN</h1>
+    <p>Đối với sự phục vụ của các cơ quan, đơn vị thuộc xã Hàm Thuận, tỉnh Lâm Đồng</p>
+  </div>
+
+  <div class="intro">
+    Xin vui lòng dành ít phút đóng góp ý kiến để giúp các cơ quan, đơn vị trên địa bàn xã Hàm Thuận không ngừng nâng cao chất lượng cải cách thủ tục hành chính, cải thiện tinh thần và thái độ phục vụ nhân dân ngày một tốt hơn.
+  </div>
+
+  <div id="blockedNotice"></div>
+
+  <!-- PHẦN I -->
+  <div class="section">
+    <div class="section-title">PHẦN I: THÔNG TIN CHUNG</div>
+    <label class="field-label">Họ và tên người dân / tổ chức (Không bắt buộc):</label>
+    <input type="text" id="fullName" placeholder="Nhập họ tên nếu muốn...">
+    <label class="field-label">Số điện thoại liên hệ (Không bắt buộc):</label>
+    <input type="tel" id="phone" placeholder="Nhập số điện thoại...">
+  </div>
+
+  <!-- PHẦN II -->
+  <div class="section">
+    <div class="section-title">PHẦN II: CƠ QUAN, ĐƠN VỊ ĐÁNH GIÁ</div>
+    <label class="field-label">Chọn cơ quan, đơn vị Ông/Bà muốn đánh giá: <span class="req">*</span></label>
+    <div id="unitSelector"></div>
+  </div>
+
+  <!-- PHẦN III -->
+  <div class="section" id="criteria-section">
+    <div class="section-title">PHẦN III: Ý KIẾN ĐÁNH GIÁ</div>
+    <div id="criteria-container">
+      <div class="criteria-placeholder">👆 Vui lòng chọn cơ quan, đơn vị ở Phần II để hiện câu hỏi đánh giá.</div>
+    </div>
+  </div>
+
+  <!-- PHẦN IV -->
+  <div class="section">
+    <div class="section-title">PHẦN IV: Ý KIẾN ĐÓNG GÓP KHÁC</div>
+    <label class="field-label">Ông/Bà có đề xuất, giải pháp gì để cơ quan phục vụ tốt hơn không?</label>
+    <textarea id="feedback" placeholder="Nhập ý kiến đóng góp, phản ánh (nếu có)..."></textarea>
+  </div>
+
+  <!-- PHẦN V -->
+  <div class="section" style="border-radius: 0 0 12px 12px;">
+    <div class="section-title">PHẦN V: ĐĂNG KÝ NHẬN HỖ TRỢ THÔNG TIN</div>
+    <div class="checkbox-row" onclick="toggleSupport()">
+      <input type="checkbox" id="needSupport">
+      <label for="needSupport">Tôi cần được hỗ trợ, tư vấn thêm thông tin.</label>
+    </div>
+    <div class="support-hint">Tích vào ô này nếu Ông/Bà muốn cán bộ liên hệ lại để hướng dẫn, hỗ trợ.</div>
+    <div class="support-fields hidden" id="supportFields">
+      <div class="support-box">
+        <label class="field-label">Họ và tên người cần hỗ trợ: <span class="req">*</span></label>
+        <input type="text" id="sName" placeholder="Nhập họ và tên...">
+        <label class="field-label">Số điện thoại / Zalo liên hệ: <span class="req">*</span></label>
+        <input type="tel" id="sPhone" placeholder="Số để cán bộ gọi lại...">
+        <label class="field-label">Địa chỉ (thôn/khu phố):</label>
+        <input type="text" id="sAddress" placeholder="Ví dụ: Thôn..., xã Hàm Thuận...">
+        <label class="field-label">Lĩnh vực cần được hỗ trợ: <span class="req">*</span></label>
+        <select id="sField"></select>
+        <label class="field-label">Nội dung cụ thể cần hỗ trợ:</label>
+        <textarea id="sContent" placeholder="Mô tả ngắn gọn việc Ông/Bà đang vướng mắc..."></textarea>
+      </div>
+    </div>
+    <button class="btn-submit" id="submitBtn" onclick="submitSurvey()">GỬI Ý KIẾN ĐÁNH GIÁ</button>
+  </div>
+</div>
+
+<!-- Overlay -->
+<div class="overlay" id="overlay">
+  <div class="overlay-box">
+    <div class="icon" id="ovIcon">✅</div>
+    <h2 id="ovTitle">Cảm ơn Ông/Bà!</h2>
+    <p id="ovMsg">Ý kiến đánh giá đã được ghi nhận.</p>
+    <button onclick="closeOverlay()">Đóng</button>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="fingerprint.js"></script>
+<script>
+let currentGroup = null;
+let currentUnit = null;
+let formStartTime = Date.now();  // Đo thời gian điền form
+let clientIP = 'unknown';
+
+// Lấy IP qua ipify (bất đồng bộ, không chặn form)
+fetch('https://api.ipify.org?format=json')
+  .then(r => r.json())
+  .then(d => { clientIP = d.ip || 'unknown'; })
+  .catch(() => { clientIP = 'unknown'; });
+
+// ===== KHỞI TẠO GIAO DIỆN =====
+function initUnitSelector() {
+  const container = document.getElementById('unitSelector');
+  let html = '';
+  Object.entries(SURVEY_CONFIG.groups).forEach(([key, g]) => {
+    html += `<div class="unit-group-title">${g.icon} ${g.label}</div><div class="unit-options">`;
+    g.units.forEach(unit => {
+      html += `<button class="unit-btn" data-group="${key}" data-unit="${unit}" onclick="selectUnit(this)">${unit}</button>`;
+    });
+    html += `</div>`;
+  });
+  container.innerHTML = html;
+
+  // Điền select lĩnh vực hỗ trợ
+  document.getElementById('sField').innerHTML =
+    '<option value="">-- Chọn lĩnh vực cần hỗ trợ --</option>' +
+    SURVEY_CONFIG.supportFields.map(f => `<option>${f}</option>`).join('');
+}
+
+function selectUnit(btn) {
+  document.querySelectorAll('.unit-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentGroup = btn.dataset.group;
+  currentUnit = btn.dataset.unit;
+  renderCriteria(currentGroup, currentUnit);
+}
+
+function renderCriteria(groupKey, unitName) {
+  const g = SURVEY_CONFIG.groups[groupKey];
+  const isThon = groupKey === 'thon';
+  let html = `<div class="selected-unit-badge">📋 Đánh giá: ${isThon ? 'Thôn ' : ''}${unitName}</div>`;
+
+  if (g.fieldSelect) {
+    const fs = g.fieldSelect;
+    html += `<label class="field-label">${fs.label} ${fs.required ? '<span class="req">*</span>' : ''}</label>`;
+    html += `<select id="hcField"><option value="">-- Vui lòng chọn lĩnh vực --</option>`;
+    html += fs.options.map(o => `<option>${o}</option>`).join('') + `</select>`;
+  }
+
+  g.questions.forEach((q, i) => {
+    const scale = g.scales[i];
+    html += `<div class="q-card"><div class="q-text">${i+1}. ${q} <span class="req">*</span></div><div class="rating-row">`;
+    scale.forEach((s, si) => {
+      html += `<div class="rating-option"><input type="radio" name="q_${i}" value="${si}"><span>${s}</span></div>`;
+    });
+    html += `</div></div>`;
+  });
+
+  document.getElementById('criteria-container').innerHTML = html;
+  document.getElementById('criteria-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function toggleSupport() {
+  const cb = document.getElementById('needSupport');
+  cb.checked = !cb.checked;
+  document.getElementById('supportFields').classList.toggle('hidden', !cb.checked);
+}
+
+// ===== KIỂM TRA CHẶN GỬI LẠI (Lớp 1: localStorage cooldown) =====
+function checkCooldown() {
+  const last = localStorage.getItem('ksht_last_submit');
+  if (!last) return true;
+  const hoursPassed = (Date.now() - parseInt(last)) / (1000 * 60 * 60);
+  if (hoursPassed < FRAUD_CONFIG.cooldownHours) {
+    const remain = Math.ceil(FRAUD_CONFIG.cooldownHours - hoursPassed);
+    document.getElementById('blockedNotice').innerHTML =
+      `<div class="blocked-msg">⏳ Ông/Bà đã gửi khảo sát gần đây. Vui lòng quay lại sau khoảng <strong>${remain} giờ</strong> để gửi đánh giá mới. (Mỗi thiết bị chỉ nên đánh giá 1 lần trong ${FRAUD_CONFIG.cooldownHours} giờ để đảm bảo khách quan.)</div>`;
+    return false;
+  }
+  return true;
+}
+
+// ===== GỬI KHẢO SÁT =====
+async function submitSurvey() {
+  // Kiểm tra đã chọn đơn vị
+  if (!currentGroup || !currentUnit) {
+    showOverlay('⚠️', 'Chưa chọn đơn vị', 'Vui lòng chọn cơ quan, đơn vị cần đánh giá ở Phần II.');
+    return;
+  }
+
+  const g = SURVEY_CONFIG.groups[currentGroup];
+
+  // Kiểm tra lĩnh vực bắt buộc (UBND)
+  if (g.fieldSelect && g.fieldSelect.required) {
+    const fieldVal = document.getElementById('hcField').value;
+    if (!fieldVal) {
+      showOverlay('⚠️', 'Thiếu thông tin', 'Vui lòng chọn lĩnh vực thủ tục hành chính.');
+      return;
+    }
+  }
+
+  // Thu thập câu trả lời
+  const answers = [];
+  for (let i = 0; i < g.questions.length; i++) {
+    const sel = document.querySelector(`input[name="q_${i}"]:checked`);
+    if (!sel) {
+      showOverlay('⚠️', 'Chưa trả lời đủ', `Vui lòng trả lời câu hỏi số ${i+1}.`);
+      return;
+    }
+    const optionIndex = parseInt(sel.value);
+    answers.push({ q: i + 1, optionIndex, score: SCORE_MAP[optionIndex] });
+  }
+
+  // Kiểm tra hỗ trợ (nếu tích)
+  const needSupport = document.getElementById('needSupport').checked;
+  let support = null;
+  if (needSupport) {
+    const sName = document.getElementById('sName').value.trim();
+    const sPhone = document.getElementById('sPhone').value.trim();
+    const sField = document.getElementById('sField').value;
+    if (!sName || !sPhone || !sField) {
+      showOverlay('⚠️', 'Thiếu thông tin hỗ trợ', 'Vui lòng điền đủ Họ tên, SĐT và Lĩnh vực cần hỗ trợ.');
+      return;
+    }
+    support = {
+      name: sName, phone: sPhone,
+      address: document.getElementById('sAddress').value.trim(),
+      field: sField,
+      content: document.getElementById('sContent').value.trim()
+    };
+  }
+
+  // Tính thời gian điền form (giây)
+  const fillSeconds = Math.round((Date.now() - formStartTime) / 1000);
+
+  // Đóng gói dữ liệu
+  const payload = {
+    timestamp: new Date().toISOString(),
+    fullName: document.getElementById('fullName').value.trim(),
+    phone: document.getElementById('phone').value.trim(),
+    group: currentGroup,
+    groupLabel: g.label,
+    unit: currentUnit,
+    hcField: g.fieldSelect ? document.getElementById('hcField').value : '',
+    answers,
+    avgScore: Math.round(answers.reduce((a, b) => a + b.score, 0) / answers.length),
+    feedback: document.getElementById('feedback').value.trim(),
+    support,
+    // Dữ liệu chống gian lận
+    fingerprint: getDeviceFingerprint(),
+    ip: clientIP,
+    fillSeconds,
+    userAgent: navigator.userAgent,
+    flagged: fillSeconds < FRAUD_CONFIG.minFillSeconds  // Cờ nghi vấn nếu điền quá nhanh
+  };
+
+  // Gửi lên Apps Script
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'ĐANG GỬI...';
+
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',  // Apps Script cần no-cors
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+
+    // Lưu mốc thời gian để chặn gửi lại (Lớp 1)
+    localStorage.setItem('ksht_last_submit', Date.now().toString());
+    document.cookie = `ksht_submitted=1; max-age=${FRAUD_CONFIG.cooldownHours * 3600}; path=/`;
+
+    showOverlay('✅', 'Cảm ơn Ông/Bà!', 'Ý kiến đánh giá đã được ghi nhận. Xin trân trọng cảm ơn sự đóng góp của Ông/Bà.');
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = 'GỬI Ý KIẾN ĐÁNH GIÁ';
+    showOverlay('❌', 'Lỗi kết nối', 'Không thể gửi dữ liệu. Vui lòng kiểm tra kết nối mạng và thử lại.');
+  }
+}
+
+function showOverlay(icon, title, msg) {
+  document.getElementById('ovIcon').textContent = icon;
+  document.getElementById('ovTitle').textContent = title;
+  document.getElementById('ovMsg').textContent = msg;
+  document.getElementById('overlay').classList.add('show');
+}
+function closeOverlay() {
+  document.getElementById('overlay').classList.remove('show');
+  // Nếu gửi thành công thì reload để chặn gửi lại
+  if (document.getElementById('ovIcon').textContent === '✅') location.reload();
+}
+
+// ===== KHỞI CHẠY =====
+initUnitSelector();
+checkCooldown();
+if (typeof APPS_SCRIPT_URL === 'undefined' || APPS_SCRIPT_URL === 'PASTE_WEB_APP_URL_HERE') {
+  console.warn('⚠️ Chưa cấu hình APPS_SCRIPT_URL trong config.js');
+}
+</script>
+
+</body>
+</html>
